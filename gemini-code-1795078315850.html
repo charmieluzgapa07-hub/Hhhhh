@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="tl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuadTone DSP & Boutique Stompbox Pedalboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #121417;
+      --bg-card: #1a1d22;
+      --bg-card-hover: #21252c;
+      --border-subtle: #2b303a;
+      --amber-primary: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chain-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+    .chain-scroll::-webkit-scrollbar-track {
+      background: #14161a;
+      border-radius: 999px;
+    }
+    .chain-scroll::-webkit-scrollbar-thumb {
+      background: #2b303b;
+      border-radius: 999px;
+    }
+
+    .stomp-chassis {
+      box-shadow:
+        0 12px 24px rgba(0, 0, 0, 0.75),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+    }
+    .stomp-knob-cap {
+      background: radial-gradient(circle at 35% 30%, #3a3f47 0%, #181a1f 70%, #0d0e11 100%);
+      box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.7),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      cursor: ns-resize;
+      touch-action: none;
+    }
+    .stomp-led-on {
+      background: radial-gradient(circle at 35% 35%, #fecaca 0%, #ef4444 50%, #991b1b 100%);
+      box-shadow: 0 0 10px #ef4444, 0 0 18px rgba(239, 68, 68, 0.85), inset 0 0 2px #fff;
+    }
+    .stomp-led-off {
+      background: radial-gradient(circle at 35% 35%, #4b5563 0%, #1f2937 80%);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+    .stomp-footswitch {
+      background: radial-gradient(circle at 35% 35%, #f8fafc 0%, #cbd5e1 55%, #64748b 100%);
+      box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.7),
+        0 0 0 3px #94a3b8,
+        0 0 0 5px #334155,
+        inset 0 2px 3px rgba(255, 255, 255, 0.9);
+      transition: transform 0.08s ease;
+    }
+    .stomp-footswitch:active {
+      transform: scale(0.92);
+    }
+    .stomp-jack {
+      background: linear-gradient(180deg, #94a3b8 0%, #e2e8f0 45%, #475569 100%);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-[#121417] text-slate-100">
+
+  <!-- Top Header Bar -->
+  <header class="w-full px-4 pt-3 pb-2 flex flex-wrap items-center justify-between gap-2 border-b border-[#1e222a]/70 bg-[#121417]/95 backdrop-blur-md sticky top-0 z-30">
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button id="btn-logo" title="QuadTone DSP Engine Info"
+        class="w-10 h-10 rounded-full bg-[#17191e] border-2 border-slate-100 flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-md">
+        <svg class="w-5 h-5 text-white" viewBox="0 0 28 28" fill="none">
+          <path d="M3 14C5.5 7 8.5 7 11 14C13.5 21 16.5 21 19 14C21.5 7 23.5 9 25 14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button id="btn-audio-play" title="Play/Stop Built-in Guitar Riff"
+        class="h-10 px-3.5 rounded-xl bg-[#1a1d23] hover:bg-[#232730] border border-[#2b303b] flex items-center gap-2 text-xs font-semibold text-slate-200 transition">
+        <span id="audio-play-icon" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+        <span id="audio-play-label">PLAY RIFF</span>
+      </button>
+      <button id="btn-mic-input" onclick="enableLiveMicInput()" title="Connect Mic / Guitar Audio Interface"
+        class="h-10 px-3.5 rounded-xl bg-[#1a1d23] hover:bg-[#232730] border border-[#2b303b] flex items-center gap-2 text-xs font-semibold text-amber-300 transition">
+        <span>MIC / INPUT</span>
+      </button>
+    </div>
+
+    <!-- View Switcher -->
+    <div class="flex items-center gap-2">
+      <button id="btn-chain-view" onclick="switchMainView('chain')"
+        class="h-10 px-4 rounded-xl bg-[#1c2026] border border-[#2c313c] text-slate-200 font-bold text-xs tracking-wide transition">
+        SIGNAL CHAIN
+      </button>
+      <button id="btn-stompbox-view" onclick="switchMainView('stompboxes')"
+        class="h-10 px-4 rounded-xl bg-amber-500 text-[#121417] font-bold text-xs tracking-wide transition">
+        10 PEDALS RACK
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="flex-1 flex flex-col justify-center relative py-4">
+    <div id="view-signal-chain" class="hidden w-full flex flex-col justify-center">
+      <div class="px-6 mb-2 text-xs text-slate-400">Signal Chain Overview</div>
+      <div class="chain-scroll w-full overflow-x-auto px-6 py-2 flex items-center">
+        <div id="signal-chain-container" class="flex items-center min-w-max mx-auto py-2 gap-3"></div>
+      </div>
+    </div>
+
+    <div id="view-stompbox-rack" class="w-full px-4 flex flex-col">
+      <div class="flex items-center justify-between mb-3 max-w-6xl mx-auto w-full">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Boutique Stompbox Pedalboard (Low-Latency Mode)</span>
+        <button onclick="bypassAllStompboxes()" class="px-3 py-1 rounded-lg bg-[#1d2129] border border-[#2f3543] text-xs font-semibold text-slate-300">
+          Bypass All
+        </button>
+      </div>
+
+      <div id="stompbox-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full px-4 pb-4 pt-2 flex flex-col gap-2.5 bg-[#121417] border-t border-[#1c2028]">
+    <div class="w-full flex items-center justify-between text-xs text-slate-400 px-1">
+      <span id="audio-status-label">Audio Engine: Low-Latency Interactive</span>
+      <span class="text-amber-400 font-mono-tech">Wired Earphones Recommended</span>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg" class="pointer-events-none fixed bottom-16 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-[#1f242d] border border-amber-500/50 text-amber-300 text-xs font-semibold shadow-xl opacity-0 transition-opacity z-50">
+    Pedal Engaged
+  </div>
+
+  <script>
+    const STOMPBOX_PEDALS = [
+      {
+        id: 'stomp_vintage_od',
+        name: 'Vintage Overdrive',
+        enabled: true,
+        bgGradient: 'linear-gradient(180deg, #a3be78 0%, #8aa660 55%, #77924f 100%)',
+        borderColor: '#698243',
+        textColor: '#18200f',
+        layout: 'triangle',
+        knobs: [
+          { key: 'Drive', label: 'Drive', value: 62 },
+          { key: 'Volume', label: 'Volume', value: 70 },
+          { key: 'Tone', label: 'Tone', value: 58 }
+        ]
+      },
+      {
+        id: 'stomp_analog_delay',
+        name: 'Analog Delay',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #32b877 0%, #239b60 55%, #19824e 100%)',
+        borderColor: '#166e42',
+        textColor: '#0a1f14',
+        layout: 'triangle',
+        knobs: [
+          { key: 'Time', label: 'Time', value: 44 },
+          { key: 'Mix', label: 'Mix', value: 48 },
+          { key: 'Repeat', label: 'Repeat', value: 40 }
+        ]
+      },
+      {
+        id: 'stomp_crunch_dist',
+        name: 'Crunch Distortion',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #4cc3d9 0%, #31a8bf 55%, #238ea3 100%)',
+        borderColor: '#1d788a',
+        textColor: '#0b2229',
+        layout: 'triangle',
+        knobs: [
+          { key: 'Gain', label: 'Gain', value: 68 },
+          { key: 'Volume', label: 'Volume', value: 65 },
+          { key: 'Tone', label: 'Tone', value: 55 }
+        ]
+      },
+      {
+        id: 'stomp_us_dream',
+        name: 'US Dream (Old School)',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #a682c4 0%, #8c66ad 55%, #765196 100%)',
+        borderColor: '#634180',
+        textColor: '#1b1026',
+        layout: 'triangle',
+        knobs: [
+          { key: 'Volume', label: 'Volume', value: 66 },
+          { key: 'Dist', label: 'Dist', value: 74 },
+          { key: 'Tone', label: 'Tone', value: 60 }
+        ]
+      },
+      {
+        id: 'stomp_digital_delay',
+        name: 'Digital Delay',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #b59f94 0%, #9b8479 55%, #856f64 100%)',
+        borderColor: '#6e5a50',
+        textColor: '#1f1815',
+        layout: 'triangle',
+        knobs: [
+          { key: 'Time', label: 'Time', value: 52 },
+          { key: 'Level', label: 'Level', value: 55 },
+          { key: 'Repeat', label: 'Repeat', value: 45 }
+        ]
+      },
+      {
+        id: 'stomp_ultimate_drive',
+        name: 'Ultimate Drive',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #2d3036 0%, #1d1f24 55%, #141619 100%)',
+        borderColor: '#3a3f47',
+        textColor: '#f1f5f9',
+        layout: 'triangle-switch',
+        switchState: 'High',
+        knobs: [
+          { key: 'Gain', label: 'Gain', value: 76 },
+          { key: 'Level', label: 'Level', value: 64 },
+          { key: 'Tone', label: 'Tone', value: 52 }
+        ]
+      },
+      {
+        id: 'stomp_tremolo',
+        name: 'Tremolo',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #e0b428 0%, #c79a16 55%, #ad820c 100%)',
+        borderColor: '#8f6a08',
+        textColor: '#1f1703',
+        layout: 'two-knobs',
+        knobs: [
+          { key: 'Intensity', label: 'Intensity', value: 65 },
+          { key: 'Rate', label: 'Rate', value: 54 }
+        ]
+      },
+      {
+        id: 'stomp_analog_chorus',
+        name: 'Analog Chorus',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #b8c9d4 0%, #9cb1bf 55%, #849aa8 100%)',
+        borderColor: '#6c818f',
+        textColor: '#111c24',
+        layout: 'two-knobs',
+        knobs: [
+          { key: 'Rate', label: 'Rate', value: 42 },
+          { key: 'Depth', label: 'Depth', value: 60 }
+        ]
+      },
+      {
+        id: 'stomp_classic_chorus',
+        name: 'Classic Chorus',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #d63c49 0%, #b82834 55%, #991b26 100%)',
+        borderColor: '#7d141d',
+        textColor: '#1f0507',
+        layout: 'two-knobs',
+        knobs: [
+          { key: 'Rate', label: 'Rate', value: 50 },
+          { key: 'Depth', label: 'Depth', value: 68 }
+        ]
+      },
+      {
+        id: 'stomp_vintage_phase',
+        name: 'Vintage Phase',
+        enabled: false,
+        bgGradient: 'linear-gradient(180deg, #cf8355 0%, #b5693c 55%, #99532a 100%)',
+        borderColor: '#7d411e',
+        textColor: '#210f05',
+        layout: 'single-knob',
+        knobs: [
+          { key: 'Speed', label: 'Speed', value: 46 }
+        ]
+      }
+    ];
+
+    function switchMainView(viewName) {
+      const chainView = document.getElementById('view-signal-chain');
+      const stompView = document.getElementById('view-stompbox-rack');
+      const chainBtn = document.getElementById('btn-chain-view');
+      const stompBtn = document.getElementById('btn-stompbox-view');
+
+      if (viewName === 'stompboxes') {
+        chainView.classList.add('hidden');
+        stompView.classList.remove('hidden');
+        stompBtn.className = 'h-10 px-4 rounded-xl bg-amber-500 text-[#121417] font-bold text-xs tracking-wide transition';
+        chainBtn.className = 'h-10 px-4 rounded-xl bg-[#1c2026] border border-[#2c313c] text-slate-200 font-bold text-xs tracking-wide transition';
+      } else {
+        stompView.classList.add('hidden');
+        chainView.classList.remove('hidden');
+        chainBtn.className = 'h-10 px-4 rounded-xl bg-amber-500 text-[#121417] font-bold text-xs tracking-wide transition';
+        stompBtn.className = 'h-10 px-4 rounded-xl bg-[#1c2026] border border-[#2c313c] text-slate-200 font-bold text-xs tracking-wide transition';
+      }
+    }
+
+    function toggleStompbox(pedalId) {
+      const pedal = STOMPBOX_PEDALS.find(p => p.id === pedalId);
+      if (!pedal) return;
+      pedal.enabled = !pedal.enabled;
+      renderStompboxRack();
+      updateAudioEngineParameters();
+      showToast(`${pedal.name}: ${pedal.enabled ? 'ENGAGED' : 'BYPASSED'}`);
+    }
+
+    function bypassAllStompboxes() {
+      STOMPBOX_PEDALS.forEach(p => { p.enabled = false; });
+      renderStompboxRack();
+      updateAudioEngineParameters();
+      showToast('All Pedals Bypassed');
+    }
+
+    function renderSingleKnobHtml(pedal, knob, sizeClass = 'w-9 h-9 sm:w-10 sm:h-10') {
+      const deg = -135 + (knob.value / 100) * 270;
+      return `
+        <div class="flex flex-col items-center">
+          <div title="${knob.label}: ${knob.value}%"
+            class="stomp-knob-cap ${sizeClass} rounded-full relative flex items-center justify-center border border-black/80">
+            <div style="transform: rotate(${deg}deg);" class="w-full h-full rounded-full relative pointer-events-none">
+              <div class="w-[2.5px] h-3 bg-white rounded-full mx-auto mt-1 shadow"></div>
+            </div>
+          </div>
+          <span class="text-[9.5px] font-bold tracking-tight mt-1 leading-none" style="color:${pedal.textColor};">${knob.label}</span>
+        </div>`;
+    }
+
+    function renderStompboxRack() {
+      const grid = document.getElementById('stompbox-grid');
+      if (!grid) return;
+
+      grid.innerHTML = STOMPBOX_PEDALS.map(pedal => {
+        let knobsSection = '';
+        if (pedal.layout === 'triangle' || pedal.layout === 'triangle-switch') {
+          knobsSection = `
+            <div class="grid grid-cols-2 gap-x-2 gap-y-1 px-1 pt-1">
+              ${renderSingleKnobHtml(pedal, pedal.knobs[0])}
+              ${renderSingleKnobHtml(pedal, pedal.knobs[1])}
+              <div class="col-span-2 flex justify-center -mt-0.5">
+                ${renderSingleKnobHtml(pedal, pedal.knobs[2])}
+              </div>
+            </div>`;
+        } else if (pedal.layout === 'two-knobs') {
+          knobsSection = `
+            <div class="grid grid-cols-2 gap-2 px-1.5 pt-2">
+              ${renderSingleKnobHtml(pedal, pedal.knobs[0], 'w-10 h-10 sm:w-11 sm:h-11')}
+              ${renderSingleKnobHtml(pedal, pedal.knobs[1], 'w-10 h-10 sm:w-11 sm:h-11')}
+            </div>`;
+        } else if (pedal.layout === 'single-knob') {
+          knobsSection = `
+            <div class="flex justify-center pt-5 pb-1">
+              ${renderSingleKnobHtml(pedal, pedal.knobs[0], 'w-11 h-11 sm:w-12 sm:h-12')}
+            </div>`;
+        }
+
+        const ledHtml = `
+          <div class="w-3.5 h-3.5 rounded-full border border-black/50 p-[1px] bg-slate-300/60 mx-auto my-1">
+            <div class="w-full h-full rounded-full ${pedal.enabled ? 'stomp-led-on' : 'stomp-led-off'}"></div>
+          </div>`;
+
+        return `
+          <div style="background:${pedal.bgGradient}; border-color:${pedal.borderColor};"
+            class="stomp-chassis relative rounded-xl border-2 px-2.5 pt-1.5 pb-2.5 flex flex-col justify-between min-h-[250px]">
+            <div class="stomp-jack absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-7 rounded-l-sm"></div>
+            <div class="stomp-jack absolute -right-2 top-1/2 -translate-y-1/2 w-1.5 h-7 rounded-r-sm"></div>
+            <div class="text-center text-[8px] font-mono-tech font-bold opacity-75 tracking-tighter" style="color:${pedal.textColor};">
+              DC9V ⊖‑◎‑⊕
+            </div>
+            <div>${knobsSection}</div>
+            <div class="relative flex flex-col items-center justify-center my-0.5">
+              <div class="w-full flex items-center justify-between px-0.5 text-[7.5px] font-extrabold opacity-75" style="color:${pedal.textColor};">
+                <span>OUT ←</span>
+                ${ledHtml}
+                <span>→ IN</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-center mt-auto">
+              <div class="text-center font-extrabold text-[11px] sm:text-xs tracking-tight leading-tight mb-2" style="color:${pedal.textColor};">
+                ${pedal.name}
+              </div>
+              <button onclick="toggleStompbox('${pedal.id}')"
+                class="stomp-footswitch w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer focus:outline-none">
+              </button>
+              <div class="text-[8px] font-extrabold tracking-widest uppercase mt-1.5 opacity-80" style="color:${pedal.textColor};">
+                TRUE BYPASS
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    /* ==================== LOW-LATENCY WEB AUDIO ENGINE ==================== */
+    const audioEngine = {
+      ctx: null,
+      isPlaying: false,
+      riffInterval: null,
+      micStream: null,
+      nodes: {}
+    };
+
+    function makeDistortionCurve(amount) {
+      const n = 8192;
+      const curve = new Float32Array(n);
+      const k = amount;
+      for (let i = 0; i < n; ++i) {
+        const x = (i * 2) / n - 1;
+        curve[i] = ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    function createLightImpulseResponse(ctx, duration = 1.8, decay = 3.2) {
+      const rate = ctx.sampleRate;
+      const length = Math.floor(rate * duration);
+      const impulse = ctx.createBuffer(2, length, rate);
+      for (let c = 0; c < 2; c++) {
+        const channel = impulse.getChannelData(c);
+        for (let i = 0; i < length; i++) {
+          channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+        }
+      }
+      return impulse;
+    }
+
+    function ensureAudioContext() {
+      if (audioEngine.ctx) {
+        if (audioEngine.ctx.state === 'suspended') {
+          audioEngine.ctx.resume();
+        }
+        return;
+      }
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx({
+        latencyHint: 'interactive',
+        sampleRate: 48000
+      });
+      audioEngine.ctx = ctx;
+
+      const inputGain = ctx.createGain();
+      inputGain.gain.value = 1.0;
+
+      // Low-oversampling overdrive for faster mobile response
+      const driveShaper = ctx.createWaveShaper();
+      driveShaper.curve = makeDistortionCurve(50);
+      driveShaper.oversample = 'none';
+
+      const toneFilter = ctx.createBiquadFilter();
+      toneFilter.type = 'lowpass';
+      toneFilter.frequency.value = 4800;
+
+      // Phaser & Chorus
+      const phaserFilter = ctx.createBiquadFilter();
+      phaserFilter.type = 'allpass';
+      phaserFilter.frequency.value = 850;
+      phaserFilter.Q.value = 3.0;
+
+      const chorusDelay = ctx.createDelay(0.05);
+      chorusDelay.delayTime.value = 0.014;
+      const chorusWet = ctx.createGain();
+      chorusWet.gain.value = 0.0;
+
+      const lfo = ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 2.5;
+      const lfoDepth = ctx.createGain();
+      lfoDepth.gain.value = 0.003;
+      lfo.connect(lfoDepth);
+      lfoDepth.connect(chorusDelay.delayTime);
+      lfo.start();
+
+      // Tremolo
+      const tremoloGain = ctx.createGain();
+      tremoloGain.gain.value = 1.0;
+      const tremoloLfo = ctx.createOscillator();
+      tremoloLfo.type = 'sine';
+      tremoloLfo.frequency.value = 5.5;
+      const tremoloDepth = ctx.createGain();
+      tremoloDepth.gain.value = 0.0;
+      tremoloLfo.connect(tremoloDepth);
+      tremoloDepth.connect(tremoloGain.gain);
+      tremoloLfo.start();
+
+      // Short Delay
+      const delayNode = ctx.createDelay(1.0);
+      delayNode.delayTime.value = 0.28;
+      const delayFeedback = ctx.createGain();
+      delayFeedback.gain.value = 0.32;
+      const delayWet = ctx.createGain();
+      delayWet.gain.value = 0.0;
+      delayNode.connect(delayFeedback).connect(delayNode);
+
+      // Lightweight short reverb
+      const convolver = ctx.createConvolver();
+      convolver.buffer = createLightImpulseResponse(ctx, 1.8, 3.2);
+      const reverbWet = ctx.createGain();
+      reverbWet.gain.value = 0.15;
+
+      const masterOut = ctx.createGain();
+      masterOut.gain.value = 0.85;
+
+      inputGain.connect(driveShaper).connect(toneFilter).connect(phaserFilter);
+      phaserFilter.connect(chorusDelay).connect(chorusWet).connect(tremoloGain);
+      phaserFilter.connect(tremoloGain);
+
+      tremoloGain.connect(masterOut);
+      tremoloGain.connect(delayNode).connect(delayWet).connect(masterOut);
+      tremoloGain.connect(convolver).connect(reverbWet).connect(masterOut);
+
+      masterOut.connect(ctx.destination);
+
+      audioEngine.nodes = {
+        inputGain,
+        driveShaper,
+        toneFilter,
+        phaserFilter,
+        chorusDelay,
+        chorusWet,
+        lfo,
+        lfoDepth,
+        tremoloGain,
+        tremoloLfo,
+        tremoloDepth,
+        delayNode,
+        delayFeedback,
+        delayWet,
+        convolver,
+        reverbWet,
+        masterOut
+      };
+
+      updateAudioEngineParameters();
+    }
+
+    function updateAudioEngineParameters() {
+      if (!audioEngine.ctx) return;
+      const n = audioEngine.nodes;
+
+      const getStomp = id => STOMPBOX_PEDALS.find(p => p.id === id);
+      const getKnob = (pedal, key) => pedal ? pedal.knobs.find(k => k.key === key).value : 0;
+
+      const sVintOd = getStomp('stomp_vintage_od');
+      const sCrunch = getStomp('stomp_crunch_dist');
+      const sDream = getStomp('stomp_us_dream');
+      const sUlt = getStomp('stomp_ultimate_drive');
+
+      const driveAmount =
+        (sVintOd && sVintOd.enabled ? getKnob(sVintOd, 'Drive') * 1.1 : 0) +
+        (sCrunch && sCrunch.enabled ? getKnob(sCrunch, 'Gain') * 1.4 : 0) +
+        (sDream && sDream.enabled ? getKnob(sDream, 'Dist') * 1.6 : 0) +
+        (sUlt && sUlt.enabled ? getKnob(sUlt, 'Gain') * 1.8 : 0);
+
+      n.driveShaper.curve = makeDistortionCurve(Math.max(4, driveAmount));
+
+      const sAChorus = getStomp('stomp_analog_chorus');
+      const sCChorus = getStomp('stomp_classic_chorus');
+      const chorusActive = (sAChorus && sAChorus.enabled) || (sCChorus && sCChorus.enabled);
+      if (chorusActive) {
+        const activeCh = (sCChorus && sCChorus.enabled) ? sCChorus : sAChorus;
+        n.lfo.frequency.value = 0.6 + (getKnob(activeCh, 'Rate') / 100) * 4.5;
+        n.lfoDepth.gain.value = 0.0015 + (getKnob(activeCh, 'Depth') / 100) * 0.006;
+        n.chorusWet.gain.value = 0.45;
+      } else {
+        n.chorusWet.gain.value = 0.0;
+      }
+
+      const sTrem = getStomp('stomp_tremolo');
+      if (sTrem && sTrem.enabled) {
+        n.tremoloLfo.frequency.value = 1.5 + (getKnob(sTrem, 'Rate') / 100) * 9.0;
+        n.tremoloDepth.gain.value = (getKnob(sTrem, 'Intensity') / 100) * 0.45;
+      } else {
+        n.tremoloDepth.gain.value = 0.0;
+      }
+
+      const sPhase = getStomp('stomp_vintage_phase');
+      if (sPhase && sPhase.enabled) {
+        n.phaserFilter.Q.value = 4.5;
+        n.phaserFilter.frequency.value = 450 + (getKnob(sPhase, 'Speed') / 100) * 1600;
+      } else {
+        n.phaserFilter.Q.value = 0.5;
+        n.phaserFilter.frequency.value = 1200;
+      }
+
+      const sADly = getStomp('stomp_analog_delay');
+      const sDDly = getStomp('stomp_digital_delay');
+      if (sDDly && sDDly.enabled) {
+        n.delayNode.delayTime.value = 0.08 + (getKnob(sDDly, 'Time') / 100) * 0.55;
+        n.delayFeedback.gain.value = (getKnob(sDDly, 'Repeat') / 100) * 0.65;
+        n.delayWet.gain.value = (getKnob(sDDly, 'Level') / 100) * 0.55;
+      } else if (sADly && sADly.enabled) {
+        n.delayNode.delayTime.value = 0.06 + (getKnob(sADly, 'Time') / 100) * 0.45;
+        n.delayFeedback.gain.value = (getKnob(sADly, 'Repeat') / 100) * 0.60;
+        n.delayWet.gain.value = (getKnob(sADly, 'Mix') / 100) * 0.50;
+      } else {
+        n.delayWet.gain.value = 0.0;
+      }
+    }
+
+    async function enableLiveMicInput() {
+      const statusLabel = document.getElementById('audio-status-label');
+      try {
+        ensureAudioContext();
+        if (audioEngine.micStream) {
+          audioEngine.micStream.getTracks().forEach(t => t.stop());
+          audioEngine.micStream = null;
+          if (statusLabel) statusLabel.textContent = 'Audio Engine: Low-Latency Interactive';
+          showToast('Mic / Input Disconnected');
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+
+        audioEngine.micStream = stream;
+        const src = audioEngine.ctx.createMediaStreamSource(stream);
+        src.connect(audioEngine.nodes.inputGain);
+        if (statusLabel) statusLabel.textContent = 'Live Input Connected (Low-Latency)';
+        showToast('Live Guitar / Mic Input Connected!');
+      } catch (err) {
+        console.warn('Mic input error:', err);
+        if (statusLabel) statusLabel.textContent = 'Mic Blocked in WebView — Use Chrome or App Settings';
+        showToast('Unable mic permission: Buksan sa Chrome o i-allow sa Settings');
+      }
+    }
+
+    function triggerGuitarNote(freq, duration = 0.55) {
+      if (!audioEngine.ctx) return;
+      const ctx = audioEngine.ctx;
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now);
+
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.001, now);
+      env.gain.linearRampToValueAtTime(0.22, now + 0.012);
+      env.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      osc.connect(env).connect(audioEngine.nodes.inputGain);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+
+    function toggleGuitarSynth() {
+      const label = document.getElementById('audio-play-label');
+      if (audioEngine.isPlaying) {
+        audioEngine.isPlaying = false;
+        clearInterval(audioEngine.riffInterval);
+        if (label) label.textContent = 'PLAY RIFF';
+        showToast('Guitar Riff Stopped');
+        return;
+      }
+
+      ensureAudioContext();
+      audioEngine.isPlaying = true;
+      if (label) label.textContent = 'STOP RIFF';
+      showToast('Playing Guitar Riff');
+
+      const riffNotes = [164.81, 246.94, 329.63, 392.00, 369.99, 293.66, 246.94, 196.00];
+      let step = 0;
+      triggerGuitarNote(riffNotes[0]);
+      audioEngine.riffInterval = setInterval(() => {
+        step = (step + 1) % riffNotes.length;
+        triggerGuitarNote(riffNotes[step]);
+      }, 400);
+    }
+
+    document.getElementById('btn-audio-play').addEventListener('click', toggleGuitarSynth);
+
+    let toastTimeout = null;
+    function showToast(text) {
+      const toast = document.getElementById('toast-msg');
+      if (!toast) return;
+      toast.textContent = text;
+      toast.style.opacity = '1';
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 2200);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStompboxRack();
+    });
+  </script>
+</body>
+</html>
